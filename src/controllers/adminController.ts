@@ -3,6 +3,8 @@ import User from '../models/User';
 import Attendance from '../models/Attendance';
 import Subscription from '../models/Subscription';
 import Coupon from '../models/Coupon';
+import Measurement from '../models/Measurement';
+import Plan from '../models/Plan';
 import { successResponse, errorResponse } from '../utils/apiResponse';
 import logger from '../utils/logger';
 import notificationService from '../services/notificationService';
@@ -91,6 +93,35 @@ export class AdminController {
     } catch (error: any) {
       logger.error(`Get Users Error: ${error.message}`);
       return errorResponse(res, 'Failed to retrieve users', 500);
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/v1/admin/users/{id}:
+   *   get:
+   *     tags: [Admin]
+   *     summary: Get a specific user by ID
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       '200':
+   *         description: User retrieved successfully
+   */
+  async getUserById(req: Request, res: Response) {
+    try {
+      const user = await User.findById(req.params.id).select('-password');
+      if (!user) return errorResponse(res, 'User not found', 404);
+      return successResponse(res, 'User retrieved successfully', user);
+    } catch (error: any) {
+      logger.error(`Get User By ID Error: ${error.message}`);
+      return errorResponse(res, 'Failed to retrieve user', 500);
     }
   }
 
@@ -215,6 +246,114 @@ export class AdminController {
     } catch (error: any) {
       logger.error(`Create Coupon Error: ${error.message}`);
       return errorResponse(res, 'Failed to create coupon', 500);
+    }
+  }
+
+  async getAllCoupons(req: Request, res: Response) {
+    try {
+      const coupons = await Coupon.find().sort({ createdAt: -1 });
+      return successResponse(res, 'Coupons retrieved successfully', coupons);
+    } catch (error: any) {
+      logger.error(`Get Coupons Error: ${error.message}`);
+      return errorResponse(res, 'Failed to retrieve coupons', 500);
+    }
+  }
+
+  async updateCoupon(req: Request, res: Response) {
+    try {
+      const coupon = await Coupon.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      if (!coupon) return errorResponse(res, 'Coupon not found', 404);
+      return successResponse(res, 'Coupon updated successfully', coupon);
+    } catch (error: any) {
+      logger.error(`Update Coupon Error: ${error.message}`);
+      return errorResponse(res, 'Failed to update coupon', 500);
+    }
+  }
+
+  async deleteCoupon(req: Request, res: Response) {
+    try {
+      const coupon = await Coupon.findByIdAndDelete(req.params.id);
+      if (!coupon) return errorResponse(res, 'Coupon not found', 404);
+      return successResponse(res, 'Coupon deleted successfully', null);
+    } catch (error: any) {
+      logger.error(`Delete Coupon Error: ${error.message}`);
+      return errorResponse(res, 'Failed to delete coupon', 500);
+    }
+  }
+
+  // Plan Management
+  async getAllPlans(req: Request, res: Response) {
+    try {
+      const plans = await Plan.find().sort({ createdAt: -1 });
+      return successResponse(res, 'Plans retrieved successfully', plans);
+    } catch (error: any) {
+      logger.error(`Get Plans Error: ${error.message}`);
+      return errorResponse(res, 'Failed to retrieve plans', 500);
+    }
+  }
+
+  async updatePlan(req: Request, res: Response) {
+    try {
+      const plan = await Plan.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      if (!plan) return errorResponse(res, 'Plan not found', 404);
+      return successResponse(res, 'Plan updated successfully', plan);
+    } catch (error: any) {
+      logger.error(`Update Plan Error: ${error.message}`);
+      return errorResponse(res, 'Failed to update plan', 500);
+    }
+  }
+
+  async deletePlan(req: Request, res: Response) {
+    try {
+      const plan = await Plan.findByIdAndDelete(req.params.id);
+      if (!plan) return errorResponse(res, 'Plan not found', 404);
+      return successResponse(res, 'Plan deleted successfully', null);
+    } catch (error: any) {
+      logger.error(`Delete Plan Error: ${error.message}`);
+      return errorResponse(res, 'Failed to delete plan', 500);
+    }
+  }
+
+  // Subscription Management
+  async getAllSubscriptions(req: Request, res: Response) {
+    try {
+      const subscriptions = await Subscription.find()
+        .populate('userId', 'name email phone')
+        .populate('planId', 'name price duration')
+        .sort({ createdAt: -1 });
+      return successResponse(res, 'Subscriptions retrieved successfully', subscriptions);
+    } catch (error: any) {
+      logger.error(`Get Subscriptions Error: ${error.message}`);
+      return errorResponse(res, 'Failed to retrieve subscriptions', 500);
+    }
+  }
+
+  // Attendance Management
+  async getAllAttendance(req: Request, res: Response) {
+    try {
+      const userId = req.query.userId as string;
+      const filter = userId ? { userId } : {};
+      
+      const attendance = await Attendance.find(filter)
+        .populate('userId', 'name email phone')
+        .sort({ checkIn: -1 });
+      return successResponse(res, 'Attendance retrieved successfully', attendance);
+    } catch (error: any) {
+      logger.error(`Get Attendance Error: ${error.message}`);
+      return errorResponse(res, 'Failed to retrieve attendance', 500);
+    }
+  }
+
+  // Measurement Management
+  async getAllMeasurements(req: Request, res: Response) {
+    try {
+      const measurements = await Measurement.find()
+        .populate('userId', 'name email phone')
+        .sort({ createdAt: -1 });
+      return successResponse(res, 'Measurements retrieved successfully', measurements);
+    } catch (error: any) {
+      logger.error(`Get Measurements Error: ${error.message}`);
+      return errorResponse(res, 'Failed to retrieve measurements', 500);
     }
   }
 }
